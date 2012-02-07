@@ -1,5 +1,4 @@
 var path = require('path'),
-    sys = require('sys'),
     assert = require('assert'),
     events = require('events'),
     http = require('http'),
@@ -24,7 +23,7 @@ function mixin(target) {
 
 var cradle = require('../lib/cradle');
 
-vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
+vows.describe("cradle").addBatch(seed.requireSeed()).addBatch({
     "Default connection settings": {
         topic: function () {
             cradle.setup({
@@ -112,10 +111,10 @@ vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
                 assert.ok(db.cache.get('bob')._rev);
             },
             "when fetching the cached document": {
-                topic: function(db) {
+                topic: function (db) {
                     db.get('bob', this.callback)
                 },
-                "document contains _id": function(e, doc) {
+                "document contains _id": function (e, doc) {
                     assert.equal(doc._id, 'bob');
                 }
             },
@@ -136,6 +135,23 @@ vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
                     assert.equal(doc.size, 12);
                     assert.isUndefined(doc.ears);
                 }
+            }
+        },
+        "save() with / in id": {
+            topic: function (db) {
+                var promise = new(events.EventEmitter);
+                db.save('bob/someotherdoc', {size: 12}, function (e, res) {
+                    promise.emit('success', res, db.cache.get('bob/someotherdoc'));
+                });
+                return promise;
+            },
+            "return a 201": status(201),
+            "allow an overwrite": function (res) {
+               assert.match(res.rev, /^1/);
+            },
+            "caches the updated document": function (e, res, doc) {
+                assert.ok(doc);
+                assert.equal(doc.size, 12);
             }
         },
         "merge()": {
@@ -261,7 +277,7 @@ vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
                 "returns a 200": status(200),
                 "returns an array of UUIDs": function (uuids) {
                     assert.isArray(uuids);
-                    assert.length(uuids, 42);
+                    assert.lengthOf(uuids, 42);
                 }
             },
             "without count": {
@@ -270,7 +286,7 @@ vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
                 "returns a 200": status(200),
                 "returns an array of UUIDs": function (uuids) {
                     assert.isArray(uuids);
-                    assert.length(uuids, 1);
+                    assert.lengthOf(uuids, 1);
                 }
             }
         },
@@ -357,7 +373,7 @@ vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
                     }
                 },
                 "with a doc containing non-ASCII characters": {
-                    topic: function(db) {
+                    topic: function (db) {
                         db.save('john', {umlauts: 'äöü'}, this.callback);
                     },
                     "creates a new document (201)": status(201)
@@ -480,7 +496,7 @@ vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
                 },
                 "returns an iterable object with key/val pairs": function (res) {
                     assert.isArray(res);
-                    assert.length(res, 2);
+                    assert.lengthOf(res, 2);
                     res.forEach(function (k, v) {
                         assert.isObject(v);
                         assert.isString(k);
@@ -511,7 +527,7 @@ vows.describe("Cradle").addBatch(seed.requireSeed()).addBatch({
                 },
                 "returns an iterable object with key/val pairs": function (res) {
                     assert.isArray(res);
-                    assert.length(res, 2);
+                    assert.lengthOf(res, 2);
                     res.forEach(function (k, v) {
                         assert.isObject(v);
                         assert.isString(k);
